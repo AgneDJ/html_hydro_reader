@@ -42,50 +42,83 @@ def unmerge_cells(ws):
     for merged_cell in merged_cells:
         ws.unmerge_cells(str(merged_cell))
 
+# Get the column index based on the folder name
+
+
+def get_column_index(ws, folder_name):
+    for col in ws.iter_cols(min_row=7, max_row=7, min_col=4, max_col=ws.max_column):
+        column_value = str(col[0].value)  # Convert column value to string
+        print(
+            f"Checking column {col[0].column} with value {column_value} against folder {folder_name}")
+        if column_value == folder_name:
+            return col[0].column
+    return None
+
 # Updates Excel file with percentages
 
 
-def update_excel_with_percentages(excel_file, html_folder, sheet_name, start_col):
-    # Get a list of all HTML files in the folder
-    html_files = glob.glob(os.path.join(html_folder, '*.html'))
-    print(f"Found HTML files: {html_files}")
+def update_excel_with_percentages(excel_file, base_folder, sheet_name):
+    # Get a list of all folders in the specified path
+    folder_path = os.path.join(base_folder, '2024', 'Liepa', '*')
+    folder_list = [f for f in glob.glob(folder_path) if os.path.isdir(f)]
+
+    print(f"Found folders: {folder_list}")
+
+    # Check if any folders were found
+    if not folder_list:
+        print("No folders found. Check the path and try again.")
+        return
 
     # Loads the workbook and worksheet
     wb = load_workbook(excel_file)
+    print("Available sheet names:", wb.sheetnames)
+    if sheet_name not in wb.sheetnames:
+        print(f"Worksheet {sheet_name} does not exist.")
+        return
+
     ws = wb[sheet_name]
 
     # Unmerges cells
     unmerge_cells(ws)
 
-    for html_file in html_files:
-        # Reads HTML table
-        data = read_html_table(html_file)
-        if not data:
-            continue  # Skip if no data
+    for folder in folder_list:
+        folder_name = os.path.basename(folder)
+        column_index = get_column_index(ws, folder_name)
+        if column_index is None:
+            print(f"No matching column for folder {folder_name}")
+            continue
 
-        # Updates Excel sheet with percentages
-        for row_name, values in data:
-            # Column C is the 3rd column
-            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=3, max_col=3):
-                if row[0].value == row_name:
-                    row_idx = row[0].row
-                    for j, value in enumerate(values):
-                        if value is not None:  # Only write non-None values
-                            ws.cell(row=row_idx, column=start_col +
-                                    j, value=value)
-                            print(
-                                f"Writing value {value} to cell ({row_idx}, {start_col + j})")
+        # Get a list of all HTML files in the folder
+        html_files = glob.glob(os.path.join(folder, '*.html'))
+
+        for html_file in html_files:
+            # Reads HTML table
+            data = read_html_table(html_file)
+            if not data:
+                continue  # Skip if no data
+
+            # Updates Excel sheet with percentages
+            for row_name, values in data:
+                # Column C is the 3rd column
+                for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=3, max_col=3):
+                    if row[0].value == row_name:
+                        row_idx = row[0].row
+                        for j, value in enumerate(values):
+                            if value is not None:  # Only write non-None values
+                                ws.cell(row=row_idx,
+                                        column=column_index + j, value=value)
+                                print(
+                                    f"Writing value {value} to cell ({row_idx}, {column_index + j})")
 
     # Saves the workbook
     wb.save(excel_file)
     print(f"Workbook {excel_file} saved successfully.")
 
 
-# Folder containing HTML files
-html_folder = '/Users/djacenko/Desktop/html_failai/'
+# Base folder containing HTML files
+base_folder = '/Users/djacenko/Desktop/html_failai/'
 
 excel_file = '/Users/djacenko/Desktop/Pasitvirtinimo_vertinimas.xlsx'
-sheet_name = 'Sheet1'
-start_col = 37  # Column 27 corresponds to column 'AA' in Excel
+sheet_name = 'Sheet1'  # Update the sheet name to 'Sheet1'
 
-update_excel_with_percentages(excel_file, html_folder, sheet_name, start_col)
+update_excel_with_percentages(excel_file, base_folder, sheet_name)

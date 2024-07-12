@@ -4,7 +4,7 @@ from openpyxl import load_workbook
 import glob
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox
 
 # Reads percentages from HTML file
 
@@ -147,6 +147,28 @@ def run_update():
 
     update_excel_with_percentages(excel_file, base_folder, sheet_name)
     messagebox.showinfo("Success", "Excel file updated successfully.")
+    preview_excel_file(excel_file)
+
+# Function to preview the updated Excel file
+
+
+def preview_excel_file(excel_file):
+    df = pd.read_excel(excel_file)
+    for widget in preview_frame.winfo_children():
+        widget.destroy()
+
+    tree = ttk.Treeview(preview_frame)
+    tree["columns"] = list(df.columns)
+    tree["show"] = "headings"
+
+    for col in tree["columns"]:
+        tree.heading(col, text=col)
+        tree.column(col, width=100, stretch=tk.NO)
+
+    for index, row in df.iterrows():
+        tree.insert("", "end", values=list(row))
+
+    tree.pack(fill=tk.BOTH, expand=True)
 
 
 # Create the GUI
@@ -170,5 +192,12 @@ sheet_name_entry = tk.Entry(root, width=50)
 sheet_name_entry.grid(row=2, column=1, padx=10, pady=10)
 
 tk.Button(root, text="Run", command=run_update).grid(row=3, column=1, pady=20)
+
+preview_frame = tk.Frame(root)
+preview_frame.grid(row=4, column=0, columnspan=3,
+                   padx=10, pady=10, sticky="nsew")
+
+root.grid_rowconfigure(4, weight=1)
+root.grid_columnconfigure(1, weight=1)
 
 root.mainloop()

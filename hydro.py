@@ -36,11 +36,11 @@ def update_excel_with_percentages(excel_file, html_file, sheet_name, start_row, 
         excel_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
-html_file = '/Users/djacenko/Desktop/html_failai'
+html_file = '/Users/djacenko/Desktop/html_failai/StatProbability_Project1_Bartuva.html'
 excel_file = '/Users/djacenko/Desktop/Pasitvirtinimo_vertinimas.xlsx'
 sheet_name = 'Sheet3'
 start_row = 31
-start_col = AK
+start_col = 26
 
 update_excel_with_percentages(
     excel_file, html_file, sheet_name, start_row, start_col)

@@ -23,7 +23,7 @@ Make sure you have Python installed. The application requires the following Pyth
 1.  **Clone the repository or download the script:**
 
     ```bash
-    git clone https://github.com/yourusername/html_hydro_reader.git
+    git clone https://github.com/AgneDJ/html_hydro_reader.git
     cd html_hydro_reader
 
     ```

@@ -6,20 +6,12 @@ import glob
 from openpyxl import load_workbook
 from bs4 import BeautifulSoup
 import pandas as pd
-To add a welcome page or splash screen that displays when the application starts, we can create a small window that shows the app name and author. This window will automatically close after a specified duration, such as 2 seconds. Here’s how to implement it:
-
-1. ** Create a Splash Screen**: Create a small window that displays the welcome message.
-2. ** Auto-Close the Splash Screen**: Set a timer to close the splash screen after 2 seconds and then show the main application window.
-
-Here’s the code with the splash screen added:
-
-```python
+from PIL import Image, ImageTk  # Import Pillow for image handling
+import threading  # For running the update in a separate thread
 
 # Set up logging
 logging.basicConfig(filename='excel_updater.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Reads percentages from HTML file
 
 
 def read_html_table(html_file):
@@ -54,15 +46,11 @@ def read_html_table(html_file):
             data.append((row_name, row_data))
     return data
 
-# Unmerges cells in the given worksheet
-
 
 def unmerge_cells(ws):
     merged_cells = list(ws.merged_cells)
     for merged_cell in merged_cells:
         ws.unmerge_cells(str(merged_cell))
-
-# Get the column index based on the folder name
 
 
 def get_column_index(ws, folder_name):
@@ -73,8 +61,6 @@ def get_column_index(ws, folder_name):
         if column_value == folder_name:
             return col[0].column
     return None
-
-# Collects data from all HTML files in the month folder
 
 
 def collect_data(base_folder, month_folder):
@@ -98,8 +84,6 @@ def collect_data(base_folder, month_folder):
 
     return collected_data
 
-# Writes collected data to Excel file
-
 
 def write_data_to_excel(excel_file, sheet_name, collected_data):
     try:
@@ -114,6 +98,11 @@ def write_data_to_excel(excel_file, sheet_name, collected_data):
 
         ws = wb[sheet_name]
         unmerge_cells(ws)
+
+        total_items = sum(len(data) for folder_data in collected_data.values()
+                          for _, data in folder_data)
+        progress_increment = 100 / total_items if total_items > 0 else 0
+        progress_value = 0
 
         for folder_name, data_entries in collected_data.items():
             column_index = get_column_index(ws, folder_name)
@@ -132,6 +121,10 @@ def write_data_to_excel(excel_file, sheet_name, collected_data):
                                         row=row_idx, column=column_index + j, value=value)
                                     logging.info(
                                         f"Writing value {value} to cell ({row_idx}, {column_index + j})")
+                            # Update progress
+                            progress_value += progress_increment
+                            progress_bar.step(progress_increment)
+                            root.update_idletasks()
 
         # Save the workbook
         wb.save(excel_file)
@@ -141,22 +134,18 @@ def write_data_to_excel(excel_file, sheet_name, collected_data):
         logging.error(f"An error occurred while updating the Excel file: {e}")
         messagebox.showwarning("Warning", f"An error occurred: {e}")
 
-# Function to select the base folder and populate month dropdown
-
 
 def select_base_folder():
-    folder_selected = filedialog.askdirectory()
+    year_folder_selected = filedialog.askdirectory(title="Select Year Folder")
     base_folder_entry.delete(0, tk.END)
-    base_folder_entry.insert(0, folder_selected)
+    base_folder_entry.insert(0, year_folder_selected)
 
-    # Populate month dropdown with subfolder names
-    if folder_selected:
-        subfolders = [name for name in os.listdir(
-            folder_selected) if os.path.isdir(os.path.join(folder_selected, name))]
-        month_combo['values'] = subfolders
+    # Populate month dropdown with subfolder names in the year folder
+    if year_folder_selected:
+        month_subfolders = [name for name in os.listdir(
+            year_folder_selected) if os.path.isdir(os.path.join(year_folder_selected, name))]
+        month_combo['values'] = month_subfolders
         month_combo.set('')  # Clear the current selection
-
-# Function to select the Excel file and populate sheet dropdown
 
 
 def select_excel_file():
@@ -172,8 +161,6 @@ def select_excel_file():
         sheet_name_combo['values'] = sheets
         sheet_name_combo.set('')  # Clear the current selection
 
-# Function to run the update process
-
 
 def run_update():
     base_folder = base_folder_entry.get()
@@ -185,62 +172,118 @@ def run_update():
         messagebox.showerror("Error", "Please provide all inputs.")
         return
 
-    # Collect data from all HTML files first
-    collected_data = collect_data(base_folder, month_folder)
+    # Reset the progress bar
+    progress_bar['value'] = 0
 
-    # Write collected data to the Excel file
-    write_data_to_excel(excel_file, sheet_name, collected_data)
+    # Show the warning message
+    warning_label.config(text="Adding data. Don't close the window.")
+    warning_label.place(x=150, y=260)
 
-# Function to show the splash screen
+    # Run the update process in a separate thread
+    thread = threading.Thread(target=run_update_thread, args=(
+        base_folder, month_folder, excel_file, sheet_name))
+    thread.start()
+
+
+def run_update_thread(base_folder, month_folder, excel_file, sheet_name):
+    try:
+        # Collect data from all HTML files first
+        collected_data = collect_data(base_folder, month_folder)
+
+        # Write collected data to the Excel file
+        write_data_to_excel(excel_file, sheet_name, collected_data)
+    finally:
+        # Ensure the progress bar reaches 100% on success
+        progress_bar['value'] = 100
+        warning_label.config(text="")  # Clear the warning message
+        root.update_idletasks()
 
 
 def show_splash():
+    global bg_image_splash
     splash = tk.Toplevel()
     splash.title("Welcome")
-    splash.geometry("300x150")
-    splash_label = tk.Label(
-        splash, text="Excel Updater App\nAuthor: Your Name", font=("Helvetica", 14))
-    splash_label.pack(expand=True)
+    splash.geometry("600x300")
+
+    # Make the splash window always on top
+    splash.attributes('-topmost', True)
+
+    # Load and display the background image for the splash screen
+    bg_image_splash = Image.open("splash_background.png")
+    bg_image_splash = bg_image_splash.resize(
+        (600, 300), Image.Resampling.LANCZOS)  # Resize to match window
+    bg_photo_splash = ImageTk.PhotoImage(bg_image_splash)
+
+    splash_label = tk.Label(splash, image=bg_photo_splash)
+    # Keep a reference to avoid garbage collection
+    splash_label.image = bg_photo_splash
+    # Make the label fill the window
+    splash_label.place(relwidth=1, relheight=1)
+
+    # Add text on top of the image
+    text_label = tk.Label(splash, text="Hydro Reader \n \n \n Author: Agne Djacenko", font=(
+        "Helvetica", 8), bg='white')
+    # Center the text label
+    text_label.place(relx=0.5, rely=0.5, anchor='center')
 
     # Hide splash after 2 seconds and show the main window
-    root.after(2000, splash.destroy)
-
-# Create the main GUI
+    root.after(4000, splash.destroy)
 
 
 def create_main_window():
-    global base_folder_entry, month_combo, excel_file_entry, sheet_name_combo, root
+    global bg_image_main, base_folder_entry, month_combo, excel_file_entry, sheet_name_combo, root, progress_bar, warning_label
 
-    root = tk.Tk()
-    root.title("Excel Updater")
+    root.deiconify()  # Show the root window
+    root.title("Hydro Reader")
+    root.geometry("600x400")
+
+    # Load and display the background image for the main window
+    bg_image_main = Image.open("main_background.png")
+    bg_image_main = bg_image_main.resize(
+        (600, 400), Image.Resampling.LANCZOS)  # Resize to match window
+    bg_photo_main = ImageTk.PhotoImage(bg_image_main)
+
+    bg_label = tk.Label(root, image=bg_photo_main)
+    bg_label.image = bg_photo_main  # Keep a reference to avoid garbage collection
+    bg_label.place(relwidth=1, relheight=1)  # Make the label fill the window
 
     # Base folder selection
-    tk.Label(root, text="Base Folder:").grid(row=0, column=0, padx=10, pady=10)
+    tk.Label(root, text="Base Folder:").place(x=20, y=20)
     base_folder_entry = tk.Entry(root, width=50)
-    base_folder_entry.grid(row=0, column=1, padx=10, pady=10)
-    tk.Button(root, text="Browse", command=select_base_folder).grid(
-        row=0, column=2, padx=10, pady=10)
+    base_folder_entry.place(x=100, y=20)
+    tk.Button(root, text="Browse",
+              command=select_base_folder).place(x=450, y=16)
 
     # Month selection dropdown
-    tk.Label(root, text="Select Month:").grid(
-        row=1, column=0, padx=10, pady=10)
+    tk.Label(root, text="Select Month:").place(x=20, y=60)
     month_combo = ttk.Combobox(root)
-    month_combo.grid(row=1, column=1, padx=10, pady=10)
+    month_combo.place(x=100, y=60)
 
     # Excel file selection
-    tk.Label(root, text="Excel File:").grid(row=2, column=0, padx=10, pady=10)
+    tk.Label(root, text="Excel File:").place(x=20, y=100)
     excel_file_entry = tk.Entry(root, width=50)
-    excel_file_entry.grid(row=2, column=1, padx=10, pady=10)
-    tk.Button(root, text="Browse", command=select_excel_file).grid(
-        row=2, column=2, padx=10, pady=10)
+    excel_file_entry.place(x=100, y=100)
+    tk.Button(root, text="Browse", command=select_excel_file).place(x=450, y=96)
 
     # Sheet name dropdown
-    tk.Label(root, text="Sheet Name:").grid(row=3, column=0, padx=10, pady=10)
+    tk.Label(root, text="Sheet Name:").place(x=20, y=140)
     sheet_name_combo = ttk.Combobox(root)
-    sheet_name_combo.grid(row=3, column=1, padx=10, pady=10)
+    sheet_name_combo.place(x=100, y=140)
+
+    # Progress bar
+    progress_bar = ttk.Progressbar(root, mode='determinate', length=300)
+    progress_bar.place(x=150, y=220)
+
+    # Warning message label
+    warning_label = tk.Label(root, text="", fg="red", font=("Helvetica", 10))
 
     # Run button
-    tk.Button(root, text="Run", command=run_update).grid(
-        row=4, column=1, pady=20)
+    tk.Button(root, text="Run", command=run_update).place(x=260, y=180)
 
-# Show
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window for now
+    show_splash()
+    create_main_window()
+    root.mainloop()

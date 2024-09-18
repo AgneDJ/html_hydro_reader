@@ -1,81 +1,74 @@
 # HTML HYDRO READER
 
-Html hydro reader is excel updater is a desktop application built using Python and `tkinter` that allows users to update an Excel file with data extracted from HTML files. This application is compatible with both macOS and Windows.
+Html hydro reader is excel updater is a desktop application built using Python and `tkinter` that allows users to update an Excel file with data extracted from HTML files. The application is designed with a graphical user interface (GUI) using Tkinter. This application is compatible with both macOS and Windows.
 
 ## Features
 
-- Select a base folder containing HTML files.
-- Select an Excel file to update.
-- Specify the sheet name in the Excel file.
-- Preview the updated Excel file within the application.
+- Reads HTML tables from specified folders and extracts data.
+- Writes extracted data into an Excel file's specified worksheet.
+- Displays a progress bar and messages during the data update process.
+- Includes a splash screen on startup.
 
 ## Prerequisites
 
-Make sure you have Python installed. The application requires the following Python packages:
-
-- `pandas`
-- `beautifulsoup4`
-- `openpyxl`
-- `tkinter` (usually included with Python but needs to be installed separately on some systems like macOS)
+- Windows operating system (the application has been tested on Windows 10/11).
+- No need to install Python or any additional libraries; the application is bundled with all necessary dependencies.
 
 ## Installation
 
-1.  **Clone the repository or download the script:**
+1. **Download the Application**
 
-    ```bash
-    git clone https://github.com/AgneDJ/html_hydro_reader.git
-    cd html_hydro_reader
+   - Download the `HydroReader.zip` file from the provided source.
 
-    ```
+2. **Extract the Files**
 
-2.  **Install the required Python packages:**
+   - Extract the contents of the `HydroReader.zip` file to a folder on your system.
 
-3.  **Install tkinter (if not already installed):**
+3. **Running the Application**
+   - Navigate to the extracted folder and double-click the `HydroReader.exe` file to run the application.
+   - Make sure all additional files (images, configuration files, etc.) are in the same directory as the `.exe`.
 
-        On macOS:
-            brew install python-tk@3.11
+## Modules and Libraries Used
 
-    - Ensure you have the necessary environment variables set in your shell configuration file (~/.bash_profile, ~/.zshrc, or other):
+The application uses the following modules and libraries:
 
-      export PATH="/usr/local/opt/tcl-tk/bin:$PATH"
-      export LDFLAGS="-L/usr/local/opt/tcl-tk/lib"
-      export CPPFLAGS="-I/usr/local/opt/tcl-tk/include"
-      export PKG_CONFIG_PATH="/usr/local/opt/tcl-tk/lib/pkgconfig"
+- `logging`: For logging events and errors during execution.
+- `tkinter` and `ttk`: For creating the graphical user interface.
+- `filedialog` and `messagebox`: For file selection and displaying messages.
+- `os` and `glob`: For file system operations.
+- `openpyxl`: For reading and writing Excel files.
+- `BeautifulSoup` from `bs4`: For parsing HTML files and extracting data from tables.
+- `pandas`: For data manipulation (used in some data processing functions).
+- `PIL` (Pillow): For handling and displaying images.
+- `threading`: For running the data update process in a separate thread to keep the GUI responsive.
 
-    - Reload your shell configuration:
-      source ~/.bash_profile # or `source ~/.zshrc`
+## Usage
 
-      On Windows:
-      tkinter is included with Python. No additional steps are required.
+1. Double-click `HydroReader.exe` to start the app.
+2. Select the base folder containing the HTML files.
+3. Choose the month from the dropdown list.
+4. Select the Excel file you want to update.
+5. Choose the worksheet from the dropdown list.
+6. Click "Run" to start the data update process.
 
-## Usage:
+## Notes
 
-    1. **Run the application:**
+- Ensure all files extracted from the `HydroReader.zip` archive are kept in the same directory. Moving files individually may cause the application to malfunction.
+- If the application uses external files like configuration files, images, or databases, they should be included in the same directory as the `.exe` file.
 
-        On macOS:
-            python3.11 hydro_app.py
+## Troubleshooting
 
-        On Windows:
-            python hydro_app.py
+- If the application does not start, ensure your antivirus software is not blocking it. Sometimes, antivirus programs may flag `.exe` files as potential threats.
+- If any DLL errors appear, make sure all necessary files from the `dist` directory are present in the same folder as the `.exe`.
+- Check the `excel_updater.log` file for detailed logs and error messages if something goes wrong.
 
-    2. **Use the application:**
+## License
 
-        - Click the "Browse" button next to "Base Folder" to select the folder containing your HTML files.
-        - Click the "Browse" button next to "Excel File" to select the Excel file you want to update.
-        - Enter the sheet name in the "Sheet Name" field.
-        - Click the "Run" button to update the Excel file and preview the updated content within the application.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
-## Code Explanation
+## Acknowledgments
 
-    - read_html_table: Reads percentages from an HTML file and returns the data as a list of tuples.
-    - unmerge_cells: Unmerges any merged cells in the specified worksheet.
-    - get_column_index: Gets the column index based on the folder name.
-    - update_excel_with_percentages: Updates the Excel file with percentages from the HTML files.
-    - select_base_folder: Opens a file dialog to select the base folder.
-    - select_excel_file: Opens a file dialog to select the Excel file.
-    - run_update: Runs the update process and previews the updated Excel file.
-    - preview_excel_file: Previews the updated Excel file in a Treeview widget.
-
-## Contributing
-
-    Contributions are welcome! Please open an issue or submit a pull request for any changes.
+- [PyInstaller](https://www.pyinstaller.org/) - For packaging the Python script into an executable.
+- [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) - For parsing HTML files.
+- [OpenPyXL](https://openpyxl.readthedocs.io/) - For working with Excel files.
+- [Pillow](https://python-pillow.org/) - For image handling in Tkinter.

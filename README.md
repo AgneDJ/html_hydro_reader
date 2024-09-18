@@ -1,6 +1,6 @@
 # HTML HYDRO READER
 
-Html hydro reader is excel updater is a desktop application built using Python and `tkinter` that allows users to update an Excel file with data extracted from HTML files. The application is designed with a graphical user interface (GUI) using Tkinter. This application is compatible with both macOS and Windows.
+Html hydro reader is excel updater is a desktop application built using Python and `tkinter` that allows users to update an Excel file with data extracted from HTML files. The application is designed with a graphical user interface (GUI) using Tkinter. This application is compatible with Windows.
 
 ## Features
 

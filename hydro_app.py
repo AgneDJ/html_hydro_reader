@@ -209,7 +209,7 @@ def show_splash():
     splash.attributes('-topmost', True)
 
     # Load and display the background image for the splash screen
-    bg_image_splash = Image.open("splash_background.png")
+    bg_image_splash = Image.open("images/splash_background.png")
     bg_image_splash = bg_image_splash.resize(
         (600, 300), Image.Resampling.LANCZOS)  # Resize to match window
     bg_photo_splash = ImageTk.PhotoImage(bg_image_splash)
@@ -238,7 +238,7 @@ def create_main_window():
     root.geometry("600x400")
 
     # Load and display the background image for the main window
-    bg_image_main = Image.open("main_background.png")
+    bg_image_main = Image.open("images/main_background.png")
     bg_image_main = bg_image_main.resize(
         (600, 400), Image.Resampling.LANCZOS)  # Resize to match window
     bg_photo_main = ImageTk.PhotoImage(bg_image_main)
